@@ -18,7 +18,7 @@
       }
     },
     {
-      "source": "/((?!assets|.*\\.js|.*\\.css|.*\\.png|.*\\.svg|.*\\.ico).)*",
+      "source": "/(.*)",
       "destination": {
         "type": "service",
         "service": "frontend"
