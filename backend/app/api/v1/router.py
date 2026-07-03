@@ -8,6 +8,7 @@ from .imports import router as imports_router
 from .receipts import router as receipts_router
 from .customer_notes import router as notes_router
 from .settings import router as settings_router
+from .users import router as users_router
 from .reports import router as reports_router
 
 api_router = APIRouter()
@@ -20,4 +21,5 @@ api_router.include_router(imports_router)
 api_router.include_router(receipts_router)
 api_router.include_router(notes_router)
 api_router.include_router(settings_router)
+api_router.include_router(users_router)
 api_router.include_router(reports_router)
