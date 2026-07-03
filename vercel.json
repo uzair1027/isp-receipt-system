@@ -2,10 +2,7 @@
   "services": {
     "frontend": {
       "root": "frontend",
-      "framework": "vite",
-      "routes": [
-        { "src": "/(.*)", "dest": "/index.html" }
-      ]
+      "framework": "vite"
     },
     "backend": {
       "root": "backend",
@@ -21,7 +18,7 @@
       }
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets|.*\\.js|.*\\.css|.*\\.png|.*\\.svg|.*\\.ico).)*",
       "destination": {
         "type": "service",
         "service": "frontend"
