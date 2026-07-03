@@ -10,14 +10,24 @@ export function Login() {
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
-    const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!username || !password) {
+      toast.error('Please enter username and password');
+      return;
+    }
     try {
       await login(username, password);
       toast.success('Welcome!');
       navigate('/dashboard');
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Login failed. Please try again.';
+      const data = err?.response?.data?.detail;
+      let msg = 'Invalid username or password';
+      if (Array.isArray(data) && data.length > 0) {
+        msg = data[0]?.msg || msg;
+      } else if (typeof data === 'string' && data) {
+        msg = data;
+      }
       toast.error(msg);
     }
   };
@@ -32,7 +42,6 @@ export function Login() {
           <h1 className="text-2xl font-bold text-gray-900">Lasani Links</h1>
           <p className="text-sm text-gray-500 mt-1">Receipt Management System</p>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
