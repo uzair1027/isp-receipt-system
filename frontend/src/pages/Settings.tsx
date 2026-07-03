@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
-const DEFAULT_RATES = { '10MB': 1200, '15MB': 1600, '20MB': 2000, '25MB': 2500, '30MB': 3000, '40MB': 4000, '50MB': 5000, '80MB': 8000 };
+const DEFAULT_RATES: Record<string, number> = { '10MB': 1200, '15MB': 1600, '20MB': 2000, '25MB': 2500, '30MB': 3000, '40MB': 4000, '50MB': 5000, '80MB': 8000 };
 
 export function Settings() {
   const [form, setForm] = useState({ company_name: '', address: '', phone: '', email: '', receipt_footer: '', currency_symbol: 'Rs.', receipt_prefix: 'RCP' });
-  const [rates, setRates] = useState(DEFAULT_RATES);
+  const [rates, setRates] = useState<Record<string, number>>(DEFAULT_RATES);
   const [newPkg, setNewPkg] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [loading, setLoading] = useState(true);
