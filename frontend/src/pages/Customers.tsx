@@ -2,80 +2,116 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { customerService, Customer } from '../services/customerService';
-import { useAuthStore } from '../features/auth/hooks/useAuth';
 
 export function Customers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [searchResults, setSearchResults] = useState<Customer[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', page],
     queryFn: () => customerService.getAll(page, 50),
   });
 
-  const customers = data?.customers || [];
+  const customers = searchResults !== null ? searchResults : (data?.customers || []);
   const total = data?.total || 0;
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/customers?search=${encodeURIComponent(searchQuery)}`);
-    }
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const results = await customerService.search(searchQuery, 50);
+      setSearchResults(results);
+    } catch { setSearchResults([]); }
+    setIsSearching(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults(null);
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Customers ({total})</h1>
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="text-sm text-blue-600 hover:text-blue-800">Dashboard</button>
-          <button onClick={logout} className="text-sm text-red-600 hover:text-red-800">Logout</button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Customers</h1>
+          <p className="text-sm text-slate-500 mt-1">{total.toLocaleString()} total customers</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mb-6">
+      {/* Search Bar */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/60">
         <div className="flex gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="Search by name, phone, device PPP..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          <button onClick={handleSearch} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-            Search
+          <div className="flex-1 relative">
+            <span className="absolute left-4 top-3 text-slate-400">🔍</span>
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Search by name, phone, device PPP..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+          </div>
+          <button onClick={handleSearch} disabled={isSearching}
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">
+            {isSearching ? 'Searching...' : 'Search'}
           </button>
+          {searchResults !== null && (
+            <button onClick={clearSearch} className="px-4 py-2.5 text-slate-500 hover:text-slate-700 text-sm">Clear</button>
+          )}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Loading customers...</div>
+          <div className="p-12 text-center">
+            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-slate-500 mt-3">Loading customers...</p>
+          </div>
         ) : customers.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No customers found.</div>
+          <div className="p-12 text-center">
+            <span className="text-4xl">📭</span>
+            <p className="text-slate-500 mt-3">No customers found.</p>
+          </div>
         ) : (
           <>
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Device/PPP</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Phone</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Package</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Action</th>
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Device/PPP</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Package</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {customers.map((customer: Customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.device_ppp}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{customer.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{customer.mobile_phone || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{customer.service_plan || '-'}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <button onClick={() => navigate(`/customers/${customer.id}`)} className="text-blue-600 hover:text-blue-800 font-medium">
+                  <tr key={customer.id} className="hover:bg-blue-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-semibold text-slate-800">{customer.device_ppp}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{customer.full_name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{customer.mobile_phone || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">{customer.service_plan || '-'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {customer.expiry_date ? (
+                        new Date(customer.expiry_date) < new Date() ? (
+                          <span className="px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">Expired</span>
+                        ) : (
+                          <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">Active</span>
+                        )
+                      ) : (
+                        <span className="px-2.5 py-1 bg-slate-50 text-slate-500 rounded-full text-xs font-medium">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => navigate(`/customers/${customer.id}`)}
+                        className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-xs font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all">
                         View
                       </button>
                     </td>
@@ -83,21 +119,16 @@ export function Customers() {
                 ))}
               </tbody>
             </table>
-            <div className="flex justify-between items-center p-4 border-t border-gray-200">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-              >
-                Previous
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-200 rounded-lg disabled:opacity-40 transition-colors">
+                ← Previous
               </button>
-              <span className="text-sm text-gray-500">Page {page}</span>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={customers.length < 50}
-                className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-              >
-                Next
+              <span className="text-sm text-slate-500 font-medium">Page {page}</span>
+              <button onClick={() => setPage(p => p + 1)} disabled={customers.length < 50}
+                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-200 rounded-lg disabled:opacity-40 transition-colors">
+                Next →
               </button>
             </div>
           </>
