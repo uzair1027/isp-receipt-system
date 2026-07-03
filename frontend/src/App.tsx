@@ -12,6 +12,7 @@ import { Settings } from './pages/Settings';
 import { WhatsAppReminders } from './pages/WhatsAppReminders';
 import { PaymentDue } from './pages/PaymentDue';
 import { Reports } from './pages/Reports';
+import { ProfitDashboard } from './pages/ProfitDashboard';
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const menuItems = [
   { to: '/customers', icon: '👥', label: 'Customers' },
   { to: '/due', icon: '⚠️', label: 'Due Alerts' },
   { to: '/reports', icon: '📈', label: 'Reports' },
+  { to: '/profit', icon: '💎', label: 'Profit' },
   { to: '/whatsapp', icon: '💬', label: 'WhatsApp' },
   { to: '/import', icon: '📥', label: 'Import CSV', admin: true },
   { to: '/settings', icon: '⚙️', label: 'Settings', admin: true },
@@ -135,6 +137,7 @@ export default function App() {
           <Route path="/import" element={<ProtectedRoute adminOnly><Layout><CSVImport /></Layout></ProtectedRoute>} />
           <Route path="/due" element={<ProtectedRoute><Layout><PaymentDue /></Layout></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+          <Route path="/profit" element={<ProtectedRoute><Layout><ProfitDashboard /></Layout></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute><Layout><WhatsAppReminders /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute adminOnly><Layout><Settings /></Layout></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
