@@ -36,7 +36,7 @@ def get_receipt(payment_id: int, db: Session = Depends(get_db)):
     def copy_block(kind):
         is_cust = kind == "CUSTOMER"
         sig_lbl = "Authorized Signature" if is_cust else "Customer Signature"
-        sig_name = f'<div class="sig-script">{CO}</div>' if is_cust else ""
+        sig_name = ""
         notes = '<div class="notes-box"><span class="panel-lbl-plain">Internal notes</span><div class="note-rule"></div><div class="note-rule"></div></div>' if not is_cust else ""
         contact = '<div class="contact-row"><span>JazzCash: 03071786655</span><span>EasyPaisa: 03078740993</span></div>' if is_cust else ""
         collected = f'<div class="collected">Thank you for choosing {CO}!</div>' if is_cust else ""
