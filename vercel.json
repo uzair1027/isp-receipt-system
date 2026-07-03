@@ -1,8 +1,28 @@
 {
-  "buildCommand": "cd backend && pip install -r requirements.txt",
-  "outputDirectory": "frontend/dist",
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite"
+    },
+    "backend": {
+      "root": "backend",
+      "entrypoint": "app/main.py"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/backend/api/v1/$1" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "frontend"
+      }
+    }
   ]
 }
