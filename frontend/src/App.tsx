@@ -9,7 +9,8 @@ import { Customers } from './pages/Customers';
 import { CustomerDetails } from './pages/CustomerDetails';
 import { CSVImport } from './pages/CSVImport';
 import { Settings } from './pages/Settings';
-import { WhatsAppReminders } from "./pages/WhatsAppReminders";
+import { WhatsAppReminders } from './pages/WhatsAppReminders';
+import { PaymentDue } from './pages/PaymentDue';
 import { Reports } from './pages/Reports';
 import { Logo } from './components/Logo';
 
@@ -37,31 +38,23 @@ function Sidebar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
   const linkClass = (path: string) => {
     const active = isActive(path);
-    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-      active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
-    }`;
+    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`;
   };
 
   return (
     <aside className="fixed top-0 left-0 h-full w-56 bg-white border-r border-gray-200 z-50 flex flex-col">
       <Link to="/dashboard" className="flex items-center gap-2 h-16 px-4 border-b border-gray-200 hover:bg-gray-50">
         <Logo size={32} />
-        <div>
-          <span className="font-semibold text-sm text-gray-900 leading-tight">Lasani Links</span>
-          <p className="text-[10px] text-gray-400 leading-tight">Receipt Manager</p>
-        </div>
+        <div><span className="font-semibold text-sm text-gray-900 leading-tight">Lasani Links</span><p className="text-[10px] text-gray-400 leading-tight">Receipt Manager</p></div>
       </Link>
       <nav className="flex-1 px-3 py-4 space-y-1">
         <Link to="/dashboard" className={linkClass('/dashboard')}>{Icons.dashboard} Dashboard</Link>
         <Link to="/customers" className={linkClass('/customers')}>{Icons.customers} Customers</Link>
-        {user?.role === 'admin' && (
-          <Link to="/import" className={linkClass('/import')}>{Icons.import} Import CSV</Link>
-        )}
+        {user?.role === 'admin' && <Link to="/import" className={linkClass('/import')}>{Icons.import} Import CSV</Link>}
+        <Link to="/due" className={linkClass('/due')}>⚠️ Due Alerts</Link>
         <Link to="/reports" className={linkClass('/reports')}>{Icons.reports} Reports</Link>
-        <Link to="/whatsapp" className={linkClass("/whatsapp")}>?? WhatsApp</Link>
-        {user?.role === 'admin' && (
-          <Link to="/settings" className={linkClass('/settings')}>{Icons.settings} Settings</Link>
-        )}
+        <Link to="/whatsapp" className={linkClass('/whatsapp')}>📱 WhatsApp</Link>
+        {user?.role === 'admin' && <Link to="/settings" className={linkClass('/settings')}>{Icons.settings} Settings</Link>}
       </nav>
       <div className="p-4 border-t border-gray-200">
         <p className="text-sm font-medium truncate">{user?.full_name}</p>
@@ -73,14 +66,7 @@ function Sidebar() {
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="pl-56">
-        <main className="p-6">{children}</main>
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen bg-gray-50"><Sidebar /><div className="pl-56"><main className="p-6">{children}</main></div></div>;
 }
 
 export default function App() {
@@ -97,6 +83,7 @@ export default function App() {
           <Route path="/customers" element={<ProtectedRoute><Layout><Customers /></Layout></ProtectedRoute>} />
           <Route path="/customers/:id" element={<ProtectedRoute><Layout><CustomerDetails /></Layout></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute adminOnly><Layout><CSVImport /></Layout></ProtectedRoute>} />
+          <Route path="/due" element={<ProtectedRoute><Layout><PaymentDue /></Layout></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute><Layout><WhatsAppReminders /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute adminOnly><Layout><Settings /></Layout></ProtectedRoute>} />
