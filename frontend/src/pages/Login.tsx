@@ -10,16 +10,16 @@ export function Login() {
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await login(username, password);
       toast.success('Welcome!');
       navigate('/dashboard');
     } catch (err: any) {
-  const msg = err?.response?.data?.detail || 'Login failed. Please try again.';
-  toast.error(msg);
-}
+      const msg = err?.response?.data?.detail || 'Login failed. Please try again.';
+      toast.error(msg);
+    }
   };
 
   return (
