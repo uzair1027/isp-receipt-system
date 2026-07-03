@@ -143,7 +143,7 @@ export function CustomerDetails() {
                   <td className="px-6 py-3 text-sm font-semibold">Rs. {p.amount_paid.toLocaleString()}</td>
                   <td className="px-6 py-3"><span className="px-2 py-0.5 bg-slate-100 rounded-full text-xs capitalize">{p.payment_method}</span></td>
                   <td className="px-6 py-3 text-right">
-                    <button onClick={() => window.open(`http://localhost:8000/api/v1/receipts/${p.id}`)}
+                    <button onClick={() => window.open(`/api/v1/receipts/${p.id}`)}
                       className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs hover:bg-blue-100 transition-colors">🖨️ Print</button>
                   </td>
                 </tr>
