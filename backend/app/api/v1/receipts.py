@@ -39,6 +39,7 @@ def get_receipt(payment_id: int, db: Session = Depends(get_db)):
         sig_name = f'<div class="sig-script">{CO}</div>' if is_cust else ""
         notes = '<div class="notes-box"><span class="panel-lbl-plain">Internal notes</span><div class="note-rule"></div><div class="note-rule"></div></div>' if not is_cust else ""
         contact = '<div class="contact-row"><span>JazzCash: 03071786655</span><span>EasyPaisa: 03078740993</span></div>' if is_cust else ""
+        collected = f'<div class="collected">Thank you for choosing {CO}!</div>' if is_cust else ""
 
         return f"""<section class="copy">
 <span class="paid-badge"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg><span>PAID</span></span>
@@ -68,7 +69,7 @@ def get_receipt(payment_id: int, db: Session = Depends(get_db)):
 <div class="thanks"><div class="thanks-script">Thank You!</div><div class="thanks-sub">{FT}</div></div>
 <div class="sig-block">{sig_name}<div class="sig-rule"></div><div class="sig-lbl">{sig_lbl}</div></div>
 </div>
-<div class="collected">{'Thank you for choosing ' + CO + '!' if is_cust else 'Collected by ' + CN}</div>
+{collected}
 </section>"""
 
     html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt {RN}</title>
