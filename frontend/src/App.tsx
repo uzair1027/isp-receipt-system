@@ -9,6 +9,7 @@ import { Customers } from './pages/Customers';
 import { CustomerDetails } from './pages/CustomerDetails';
 import { CSVImport } from './pages/CSVImport';
 import { Settings } from './pages/Settings';
+import { WhatsAppReminders } from "./pages/WhatsAppReminders";
 import { Reports } from './pages/Reports';
 import { Logo } from './components/Logo';
 
@@ -57,6 +58,7 @@ function Sidebar() {
           <Link to="/import" className={linkClass('/import')}>{Icons.import} Import CSV</Link>
         )}
         <Link to="/reports" className={linkClass('/reports')}>{Icons.reports} Reports</Link>
+        <Link to="/whatsapp" className={linkClass("/whatsapp")}>?? WhatsApp</Link>
         {user?.role === 'admin' && (
           <Link to="/settings" className={linkClass('/settings')}>{Icons.settings} Settings</Link>
         )}
@@ -96,6 +98,7 @@ export default function App() {
           <Route path="/customers/:id" element={<ProtectedRoute><Layout><CustomerDetails /></Layout></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute adminOnly><Layout><CSVImport /></Layout></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+          <Route path="/whatsapp" element={<ProtectedRoute><Layout><WhatsAppReminders /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute adminOnly><Layout><Settings /></Layout></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
