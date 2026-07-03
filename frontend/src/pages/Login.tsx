@@ -17,8 +17,9 @@ export function Login() {
       toast.success('Welcome!');
       navigate('/dashboard');
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Login failed');
-    }
+  const msg = err?.response?.data?.detail || 'Login failed. Please try again.';
+  toast.error(msg);
+}
   };
 
   return (
