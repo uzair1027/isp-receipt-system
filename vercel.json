@@ -1,8 +1,30 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite",
+      "outputDirectory": "dist"
+    },
+    "backend": {
+      "root": "backend",
+      "entrypoint": "app/main.py",
+      "framework": "fastapi"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/v1/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "frontend"
+      }
+    }
   ]
 }
