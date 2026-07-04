@@ -9,7 +9,7 @@ export function WhatsAppReminders() {
   const [expiryFilter, setExpiryFilter] = useState('');
   const [packageFilter, setPackageFilter] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('Assalam-o-Alaikum, your internet bill is due. Please pay via JazzCash 03071786655 or EasyPaisa 03078740993. - Lasani Links');
+  const [message, setMessage] = useState('Assalam-o-Alaikum, your internet bill of {package} is due on {expiry}. Please pay via JazzCash 03071786655 or EasyPaisa 03078740993. - Lasani Links');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -33,20 +33,28 @@ export function WhatsAppReminders() {
 
   const applyFilters = () => {
     let result = [...customers];
-    if (expiryFilter) {
-      const filterDate = new Date(expiryFilter);
+    
+    if (expiryFilter !== '') {
+      const days = parseInt(expiryFilter);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
       result = result.filter((c: any) => {
         if (!c.expiry_date) return false;
         const expDate = new Date(c.expiry_date);
-        const diffDays = Math.ceil((expDate.getTime() - filterDate.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 3;
+        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (days === -1) return diffDays < 0; // Already expired
+        return diffDays >= 0 && diffDays <= days; // Within X days
       });
     }
+    
     if (packageFilter) {
       result = result.filter((c: any) => 
         c.service_plan && c.service_plan.toLowerCase().includes(packageFilter.toLowerCase())
       );
     }
+    
     setFiltered(result);
     setSelected(new Set());
   };
@@ -70,15 +78,20 @@ export function WhatsAppReminders() {
     if (selectedCustomers.length === 0) return;
     
     if (selectedCustomers.length > 10) {
-      if (!confirm(`About to open ${selectedCustomers.length} WhatsApp tabs at once. Your browser may slow down. Continue?`)) return;
+      if (!confirm(`About to open ${selectedCustomers.length} WhatsApp tabs. Your browser may slow down. Continue?`)) return;
     }
     
     let count = 0;
+    const today = new Date().toLocaleDateString('en-PK');
     selectedCustomers.forEach((c: any) => {
       if (c.mobile_phone && c.mobile_phone !== '-' && c.mobile_phone !== 'N/A') {
         const phone = c.mobile_phone.replace(/[^0-9]/g, '');
         const msg = encodeURIComponent(
-          message.replace('{name}', c.full_name || 'Customer').replace('{package}', c.service_plan || 'N/A')
+          message
+            .replace('{name}', c.full_name || 'Customer')
+            .replace('{package}', c.service_plan || 'N/A')
+            .replace('{date}', today)
+            .replace('{expiry}', c.expiry_date || 'N/A')
         );
         window.open(`https://wa.me/92${phone}?text=${msg}`, '_blank');
         count++;
@@ -93,8 +106,13 @@ export function WhatsAppReminders() {
       return;
     }
     const phone = customer.mobile_phone.replace(/[^0-9]/g, '');
+    const today = new Date().toLocaleDateString('en-PK');
     const msg = encodeURIComponent(
-      message.replace('{name}', customer.full_name || 'Customer').replace('{package}', customer.service_plan || 'N/A')
+      message
+        .replace('{name}', customer.full_name || 'Customer')
+        .replace('{package}', customer.service_plan || 'N/A')
+        .replace('{date}', today)
+        .replace('{expiry}', customer.expiry_date || 'N/A')
     );
     window.open(`https://wa.me/92${phone}?text=${msg}`, '_blank');
   };
@@ -112,9 +130,20 @@ export function WhatsAppReminders() {
         <h2 className="text-sm font-semibold text-slate-700">🔍 Filter Customers</h2>
         <div className="flex gap-3 flex-wrap items-end">
           <div>
-            <label className="text-xs text-slate-500 block mb-1">Expiry Date</label>
-            <input type="date" value={expiryFilter} onChange={e => setExpiryFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" />
+            <label className="text-xs text-slate-500 block mb-1">Due Within</label>
+            <select value={expiryFilter} onChange={e => setExpiryFilter(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+              <option value="">All Customers</option>
+              <option value="0">Today Only</option>
+              <option value="1">Within 1 Day</option>
+              <option value="2">Within 2 Days</option>
+              <option value="3">Within 3 Days</option>
+              <option value="5">Within 5 Days</option>
+              <option value="7">Within 7 Days</option>
+              <option value="15">Within 15 Days</option>
+              <option value="30">Within 30 Days</option>
+              <option value="-1">Already Expired</option>
+            </select>
           </div>
           <div>
             <label className="text-xs text-slate-500 block mb-1">Package</label>
@@ -134,7 +163,7 @@ export function WhatsAppReminders() {
         <h2 className="text-sm font-semibold text-slate-700 mb-2">✏️ Message</h2>
         <textarea value={message} onChange={e => setMessage(e.target.value)}
           className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" rows={3} />
-        <p className="text-xs text-slate-400 mt-1">Use {'{name}'} and {'{package}'} as placeholders</p>
+        <p className="text-xs text-slate-400 mt-1">Use {'{name}'}, {'{package}'}, {'{date}'}, and {'{expiry}'} as placeholders</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">

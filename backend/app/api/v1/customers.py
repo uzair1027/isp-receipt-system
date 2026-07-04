@@ -21,6 +21,16 @@ def search_customers(
     return service.search_customers(q, limit)
 
 
+@router.get("/public-search", response_model=list[CustomerResponse])
+def public_search(
+    q: str = Query(..., min_length=1),
+    db: Session = Depends(get_db)
+):
+    """Public search for customer portal - no auth required"""
+    service = CustomerService(db)
+    return service.search_customers(q, 1)
+
+
 @router.get("/", response_model=CustomerListResponse)
 def list_customers(
     page: int = Query(1, ge=1),

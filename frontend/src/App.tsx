@@ -13,6 +13,7 @@ import { WhatsAppReminders } from './pages/WhatsAppReminders';
 import { PaymentDue } from './pages/PaymentDue';
 import { Reports } from './pages/Reports';
 import { ProfitDashboard } from './pages/ProfitDashboard';
+import { CustomerPortal } from './pages/CustomerPortal';
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,7 @@ export default function App() {
       <BrowserRouter>
         <Toaster position="top-right" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '12px', fontSize: '14px' } }} />
         <Routes>
+          <Route path="/portal" element={<CustomerPortal />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
           <Route path="/customers" element={<ProtectedRoute><Layout><Customers /></Layout></ProtectedRoute>} />

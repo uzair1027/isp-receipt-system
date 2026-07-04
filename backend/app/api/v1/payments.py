@@ -50,3 +50,9 @@ def get_today_stats(
     """Get today's collection stats."""
     service = PaymentService(db)
     return service.get_today_stats()
+
+@router.get("/public/customer/{customer_id}")
+def public_customer_payments(customer_id: int, db: Session = Depends(get_db)):
+    """Public payment history - no auth required for portal"""
+    service = PaymentService(db)
+    return service.get_customer_payments(customer_id)
