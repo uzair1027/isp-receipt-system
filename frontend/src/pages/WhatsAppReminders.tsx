@@ -9,7 +9,9 @@ export function WhatsAppReminders() {
   const [expiryFilter, setExpiryFilter] = useState('');
   const [packageFilter, setPackageFilter] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('Assalam-o-Alaikum, your internet bill of {package} is due on {expiry}. Please pay via JazzCash 03071786655 or EasyPaisa 03078740993. - Lasani Links');
+  const [message, setMessage] = useState('Assalam-o-Alaikum, your internet package {package} expires on {expiry}. Please renew via JazzCash 03071786655 or EasyPaisa 03078740993. - Lasani Links');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -31,6 +33,23 @@ export function WhatsAppReminders() {
     setLoading(false);
   };
 
+  const getDaysLeft = (expiryDate: string | null): number | null => {
+    if (!expiryDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const exp = new Date(expiryDate);
+    return Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const daysBadge = (days: number | null) => {
+    if (days === null) return <span className="text-xs text-slate-400">-</span>;
+    if (days < 0) return <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium">{Math.abs(days)}d ago</span>;
+    if (days === 0) return <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">Today!</span>;
+    if (days === 1) return <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Tomorrow</span>;
+    if (days <= 3) return <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">{days}d left</span>;
+    return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{days}d left</span>;
+  };
+
   const applyFilters = () => {
     let result = [...customers];
     
@@ -40,12 +59,11 @@ export function WhatsAppReminders() {
       today.setHours(0, 0, 0, 0);
       
       result = result.filter((c: any) => {
-        if (!c.expiry_date) return false;
-        const expDate = new Date(c.expiry_date);
-        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (days === -1) return diffDays < 0; // Already expired
-        return diffDays >= 0 && diffDays <= days; // Within X days
+        const daysLeft = getDaysLeft(c.expiry_date);
+        if (daysLeft === null) return false;
+        if (days === -1) return daysLeft < 0; // Already expired
+        if (days === 0) return daysLeft === 1; // Tomorrow (remind 1 day early)
+        return daysLeft >= 1 && daysLeft <= days + 1; // Remind X days before
       });
     }
     
@@ -55,8 +73,18 @@ export function WhatsAppReminders() {
       );
     }
     
+    result.sort((a: any, b: any) => {
+      const aDays = getDaysLeft(a.expiry_date);
+      const bDays = getDaysLeft(b.expiry_date);
+      if (aDays === null && bDays === null) return 0;
+      if (aDays === null) return 1;
+      if (bDays === null) return -1;
+      return aDays - bDays;
+    });
+    
     setFiltered(result);
     setSelected(new Set());
+    setCurrentPage(1);
   };
 
   const toggleSelect = (id: number) => {
@@ -66,10 +94,10 @@ export function WhatsAppReminders() {
   };
 
   const selectAll = () => {
-    if (selected.size === filtered.length) {
+    if (selected.size === paginatedData.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(filtered.map((c: any) => c.id)));
+      setSelected(new Set(paginatedData.map((c: any) => c.id)));
     }
   };
 
@@ -78,7 +106,7 @@ export function WhatsAppReminders() {
     if (selectedCustomers.length === 0) return;
     
     if (selectedCustomers.length > 10) {
-      if (!confirm(`About to open ${selectedCustomers.length} WhatsApp tabs. Your browser may slow down. Continue?`)) return;
+      if (!confirm(`About to open ${selectedCustomers.length} WhatsApp tabs. Continue?`)) return;
     }
     
     let count = 0;
@@ -119,29 +147,31 @@ export function WhatsAppReminders() {
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
 
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedData = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">WhatsApp Reminders</h1>
-        <p className="text-sm text-slate-500 mt-1">Send payment reminders to customers</p>
+        <p className="text-sm text-slate-500 mt-1">Remind customers 1 day before expiry</p>
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/60 space-y-4">
         <h2 className="text-sm font-semibold text-slate-700">🔍 Filter Customers</h2>
         <div className="flex gap-3 flex-wrap items-end">
           <div>
-            <label className="text-xs text-slate-500 block mb-1">Due Within</label>
+            <label className="text-xs text-slate-500 block mb-1">Remind Before Expiry</label>
             <select value={expiryFilter} onChange={e => setExpiryFilter(e.target.value)}
               className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
               <option value="">All Customers</option>
-              <option value="0">Today Only</option>
-              <option value="1">Within 1 Day</option>
-              <option value="2">Within 2 Days</option>
-              <option value="3">Within 3 Days</option>
-              <option value="5">Within 5 Days</option>
-              <option value="7">Within 7 Days</option>
-              <option value="15">Within 15 Days</option>
-              <option value="30">Within 30 Days</option>
+              <option value="0">Tomorrow (1 day before)</option>
+              <option value="1">Within 2 Days</option>
+              <option value="2">Within 3 Days</option>
+              <option value="4">Within 5 Days</option>
+              <option value="6">Within 7 Days</option>
+              <option value="14">Within 15 Days</option>
+              <option value="29">Within 30 Days</option>
               <option value="-1">Already Expired</option>
             </select>
           </div>
@@ -154,7 +184,7 @@ export function WhatsAppReminders() {
             </select>
           </div>
           <button onClick={applyFilters} className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-medium">Apply</button>
-          <button onClick={() => { setExpiryFilter(''); setPackageFilter(''); setFiltered(customers); }}
+          <button onClick={() => { setExpiryFilter(''); setPackageFilter(''); setFiltered(customers); setCurrentPage(1); }}
             className="px-5 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm">Clear</button>
         </div>
       </div>
@@ -171,7 +201,7 @@ export function WhatsAppReminders() {
           <span className="font-semibold text-slate-700">{filtered.length} customers</span>
           <div className="flex gap-2">
             <button onClick={selectAll} className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200 transition-colors">
-              {selected.size === filtered.length ? 'Deselect All' : 'Select All'}
+              {selected.size === paginatedData.length && paginatedData.length > 0 ? 'Deselect Page' : 'Select Page'}
             </button>
             <button onClick={sendReminders} disabled={selected.size === 0}
               className="px-5 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:shadow-lg transition-all">
@@ -180,20 +210,28 @@ export function WhatsAppReminders() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[700px]">
             <thead><tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase">
-              <th className="px-4 py-3">☐</th><th className="px-4 py-3">Device</th><th className="px-4 py-3">Name</th><th className="px-4 py-3">Phone</th><th className="px-4 py-3">Package</th><th className="px-4 py-3">Expiry</th><th className="px-4 py-3">Send</th>
+              <th className="px-3 py-3">☐</th>
+              <th className="px-3 py-3">Device</th>
+              <th className="px-3 py-3">Name</th>
+              <th className="px-3 py-3">Phone</th>
+              <th className="px-3 py-3">Package</th>
+              <th className="px-3 py-3">Expiry</th>
+              <th className="px-3 py-3">Days Left</th>
+              <th className="px-3 py-3">Send</th>
             </tr></thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.slice(0, 100).map((c: any) => (
+              {paginatedData.map((c: any) => (
                 <tr key={c.id} className="hover:bg-blue-50/50 transition-colors">
-                  <td className="px-4 py-3"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} /></td>
-                  <td className="px-4 py-3 text-sm font-medium">{c.device_ppp}</td>
-                  <td className="px-4 py-3 text-sm">{c.full_name}</td>
-                  <td className="px-4 py-3 text-sm">{c.mobile_phone || '-'}</td>
-                  <td className="px-4 py-3 text-sm">{c.service_plan || '-'}</td>
-                  <td className="px-4 py-3 text-sm">{c.expiry_date || '-'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} /></td>
+                  <td className="px-3 py-3 text-sm font-medium">{c.device_ppp}</td>
+                  <td className="px-3 py-3 text-sm">{c.full_name}</td>
+                  <td className="px-3 py-3 text-sm">{c.mobile_phone || '-'}</td>
+                  <td className="px-3 py-3 text-sm">{c.service_plan || '-'}</td>
+                  <td className="px-3 py-3 text-sm">{c.expiry_date || '-'}</td>
+                  <td className="px-3 py-3">{daysBadge(getDaysLeft(c.expiry_date))}</td>
+                  <td className="px-3 py-3">
                     <button onClick={() => sendToOne(c)} className="text-green-600 hover:text-green-700 text-xs font-medium">📱 Send</button>
                   </td>
                 </tr>
@@ -201,6 +239,17 @@ export function WhatsAppReminders() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center px-5 py-3 border-t bg-slate-50">
+            <span className="text-xs text-slate-500">Page {currentPage} of {totalPages}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                className="px-3 py-1 bg-white border rounded-lg text-xs disabled:opacity-50 hover:bg-slate-100">← Prev</button>
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-white border rounded-lg text-xs disabled:opacity-50 hover:bg-slate-100">Next →</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
